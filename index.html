@@ -246,9 +246,9 @@
 
   <!-- ===================== 管理 · 团队看板 ===================== -->
   <section class="page" id="page-team">
-    <h2 class="pageTitle">团队看板</h2>
+    <h2 class="pageTitle">团队看板 <button class="btn small" id="teamRefresh" style="display:none;vertical-align:middle" onclick="renderTeam()">↻ 刷新</button></h2>
     <div id="teamEmpty" class="card" style="display:none">
-      <p>还没有团队数据。让每位同事在「日报录入」页点击<b>「复制日报文本」</b>发到微信群，你把群里的日报消息复制后，到「数据汇总」页<b>粘贴导入</b>即可自动汇总。</p>
+      <p id="teamEmptyText">还没有团队数据。让每位同事在「日报录入」页点击<b>「复制日报文本」</b>发到微信群，你把群里的日报消息复制后，到「数据汇总」页<b>粘贴导入</b>即可自动汇总。</p>
     </div>
     <div id="teamBody">
       <div class="stats" id="teamStats"></div>
@@ -263,6 +263,7 @@
   <!-- ===================== 管理 · 数据汇总 ===================== -->
   <section class="page" id="page-import">
     <h2 class="pageTitle">数据汇总</h2>
+    <div class="aiBanner" id="cloudBanner" style="display:none">☁️ 已启用云端实时同步：员工保存日报后，团队看板自动汇总，<b>无需任何手动操作</b>。下方导入功能仅作备用（如个别员工临时无法联网）。</div>
     <div class="card" style="margin-bottom:16px">
       <h3 style="font-size:.95rem;margin-bottom:6px">📋 粘贴微信群日报（推荐）</h3>
       <p class="muted" style="margin-bottom:10px">员工每天用「复制日报文本」把日报发到微信群。你只需把群里的日报消息整段复制，粘贴到下面，点解析即可自动汇总——可以一次粘贴多人、多天的日报，重复导入自动覆盖更新。</p>
@@ -293,6 +294,38 @@ const store = {
   get(k, d){ try{ const v = localStorage.getItem('swfn_'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
   set(k, v){ localStorage.setItem('swfn_'+k, JSON.stringify(v)); }
 };
+/* ============================================================
+   云同步（Supabase）：填入项目 URL 和 anon key 后全团队实时同步。
+   anon key 是 Supabase 设计为可公开的客户端密钥，放在前端是官方用法。
+   留空则回退为纯本地模式（微信粘贴汇总）。
+============================================================ */
+const CLOUD = { url:'', key:'' };
+const cloudOn = () => !!(CLOUD.url && CLOUD.key);
+async function sb(path, opts={}){
+  const res = await fetch(CLOUD.url+'/rest/v1/'+path, {...opts,
+    headers:{'apikey':CLOUD.key,'Authorization':'Bearer '+CLOUD.key,'Content-Type':'application/json',...(opts.headers||{})}});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return res.status===204 ? null : res.json();
+}
+// 数据库列名避开 SQL 关键字：new→newc，group→grp
+const toRow = (name,date,r) => ({name,date,comm:+r.comm||0,newc:+r.new||0,vip:+r.vip||0,grp:+r.group||0,deal:+r.deal||0,note:r.note||'',plan:r.plan||''});
+const fromRow = w => ({comm:+w.comm||0,new:+w.newc||0,vip:+w.vip||0,group:+w.grp||0,deal:+w.deal||0,note:w.note||'',plan:w.plan||''});
+async function cloudPush(date,r){
+  const name=store.get('name','');
+  if(!cloudOn()||!name) return false;
+  await sb('reports?on_conflict=name,date',{method:'POST',
+    headers:{'Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify([toRow(name,date,r)])});
+  return true;
+}
+async function cloudSyncRecent(){ // 启动时静默补传最近3天，防止离线/失败漏报
+  const name=store.get('name','');
+  if(!cloudOn()||!name) return;
+  const all=getReports(); const rows=[];
+  for(let i=0;i<3;i++){ const d=daysAgo(i); if(all[d]) rows.push(toRow(name,d,all[d])); }
+  if(rows.length){ try{ await sb('reports?on_conflict=name,date',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(rows)}); }catch(e){} }
+}
+
 const pad = n => String(n).padStart(2,'0');
 const dstr = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const today = () => dstr(new Date());
@@ -575,7 +608,15 @@ function saveReport(){
     plan:document.getElementById('rPlan').value.trim()
   };
   const all=getReports(); all[date]=r; store.set('reports',all);
-  renderReportList(); toast('日报已保存 ✓');
+  renderReportList();
+  if(cloudOn()){
+    if(!store.get('name','')){ toast('日报已存本机；请设置姓名后再保存一次以同步云端'); setName(); return; }
+    cloudPush(date,r)
+      .then(()=>toast('日报已保存并同步到云端 ☁️✓'))
+      .catch(()=>toast('已存本机，云端同步失败——网络恢复后再点一次保存即可'));
+  }else{
+    toast('日报已保存 ✓');
+  }
 }
 function loadReportForm(date){
   const all=getReports(); const r=all[date]||{};
@@ -771,8 +812,20 @@ function renderMembers(){
     <button class="btn small danger" onclick="removeMember('${esc(n)}')">移除</button></div>`;
   }).join('');
 }
-function renderTeam(){
-  const team=getTeam(); const names=Object.keys(team);
+async function renderTeam(){
+  let team=getTeam();
+  if(cloudOn()){
+    try{
+      const rows=await sb('reports?select=*&date=gte.'+daysAgo(60)+'&order=date.desc&limit=5000');
+      team=JSON.parse(JSON.stringify(team)); // 云端数据与本地备用导入合并，云端优先
+      rows.forEach(w=>{
+        const d=String(w.date).slice(0,10);
+        if(!team[w.name]) team[w.name]={reports:{},importedAt:new Date().toISOString()};
+        team[w.name].reports[d]=fromRow(w);
+      });
+    }catch(e){ toast('云端拉取失败，正在显示本地数据'); }
+  }
+  const names=Object.keys(team);
   document.getElementById('teamEmpty').style.display=names.length?'none':'block';
   document.getElementById('teamBody').style.display=names.length?'block':'none';
   if(!names.length) return;
@@ -821,6 +874,12 @@ function renderTeam(){
 /* ===================== 初始化 ===================== */
 document.getElementById('rDate').value=today();
 renderName(); renderFocus(); renderCourses(); renderScenarios(); resetChat(); loadAiCfgUI(); renderReportList();
+if(cloudOn()){
+  document.getElementById('teamRefresh').style.display='inline-block';
+  document.getElementById('cloudBanner').style.display='flex';
+  document.getElementById('teamEmptyText').innerHTML='☁️ 云同步已开启，但还没有任何日报。员工在「日报录入」页保存日报后，这里会自动出现团队数据。';
+  cloudSyncRecent();
+}
 </script>
 </body>
 </html>
