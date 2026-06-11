@@ -189,7 +189,7 @@
       <button class="btn small" onclick="resetChat()">重新开始本场景</button>
       <button class="btn small" onclick="copyPrompt()">复制提示词到其他AI</button>
     </div>
-    <details class="settings">
+    <details class="settings" id="aiSettings">
       <summary>⚙️ 接口设置（保存在本机浏览器，不会上传）</summary>
       <div class="settingsBody">
         <label class="f"><span class="lt">API 地址（OpenAI 兼容格式）</span><input id="aiBase" placeholder="https://api.deepseek.com"></label>
@@ -211,6 +211,7 @@
         <label class="f"><span class="lt">VIP意向推进</span><input type="number" min="0" id="rVip" placeholder="0"></label>
         <label class="f"><span class="lt">入群人数</span><input type="number" min="0" id="rGroup" placeholder="0"></label>
         <label class="f"><span class="lt">成交单数</span><input type="number" min="0" id="rDeal" placeholder="0"></label>
+        <label class="f"><span class="lt">成交金额（元）</span><input type="number" min="0" id="rAmt" placeholder="0"></label>
       </div>
       <label class="f"><span class="lt">今日复盘（卡点 / 有效动作）</span><textarea id="rNote" rows="2" placeholder="例：下午3-5点回复率最高；2位客户卡在价格异议…"></textarea></label>
       <label class="f"><span class="lt">明日计划</span><textarea id="rPlan" rows="2" placeholder="例：优先跟进A类客户5位，冲刺有效沟通50人…"></textarea></label>
@@ -234,7 +235,7 @@
     <div class="chartCard">
       <h3>目标进度</h3>
       <div id="myGoals"></div>
-      <details class="settings"><summary>⚙️ 调整目标</summary>
+      <details class="settings" id="goalSettings"><summary>⚙️ 调整目标</summary>
         <div class="settingsBody">
           <label class="f"><span class="lt">每日有效沟通目标</span><input type="number" id="gComm" min="1"></label>
           <label class="f"><span class="lt">每周VIP意向目标</span><input type="number" id="gVip" min="1"></label>
@@ -311,8 +312,9 @@ async function sb(path, opts={}){
   return res.status===204 ? null : res.json();
 }
 // 数据库列名避开 SQL 关键字：new→newc，group→grp
-const toRow = (name,date,r) => ({name,date,comm:+r.comm||0,newc:+r.new||0,vip:+r.vip||0,grp:+r.group||0,deal:+r.deal||0,note:r.note||'',plan:r.plan||''});
-const fromRow = w => ({comm:+w.comm||0,new:+w.newc||0,vip:+w.vip||0,group:+w.grp||0,deal:+w.deal||0,note:w.note||'',plan:w.plan||''});
+const toRow = (name,date,r) => ({name,date,comm:+r.comm||0,newc:+r.new||0,vip:+r.vip||0,grp:+r.group||0,deal:+r.deal||0,amt:+r.amt||0,note:r.note||'',plan:r.plan||''});
+const fromRow = w => ({comm:+w.comm||0,new:+w.newc||0,vip:+w.vip||0,group:+w.grp||0,deal:+w.deal||0,amt:+w.amt||0,note:w.note||'',plan:w.plan||''});
+const fmtMoney = v => { v=+v||0; return v>=10000 ? (v/10000).toFixed(1).replace(/\.0$/,'')+'万' : String(v); };
 async function cloudPush(date,r){
   const name=store.get('name','');
   if(!cloudOn()||!name) return false;
@@ -541,7 +543,7 @@ function saveAiCfg(){
     model:document.getElementById('aiModel').value.trim() || 'deepseek-chat',
     key:document.getElementById('aiKey').value.trim()
   });
-  checkAiCfg(); toast('接口设置已保存');
+  checkAiCfg(); document.getElementById('aiSettings').open=false; toast('接口设置已保存');
 }
 function loadAiCfgUI(){
   const c=aiCfg();
@@ -607,6 +609,7 @@ function saveReport(){
     vip:+document.getElementById('rVip').value||0,
     group:+document.getElementById('rGroup').value||0,
     deal:+document.getElementById('rDeal').value||0,
+    amt:+document.getElementById('rAmt').value||0,
     note:document.getElementById('rNote').value.trim(),
     plan:document.getElementById('rPlan').value.trim()
   };
@@ -629,6 +632,7 @@ function loadReportForm(date){
   document.getElementById('rVip').value=r.vip??'';
   document.getElementById('rGroup').value=r.group??'';
   document.getElementById('rDeal').value=r.deal??'';
+  document.getElementById('rAmt').value=r.amt??'';
   document.getElementById('rNote').value=r.note||'';
   document.getElementById('rPlan').value=r.plan||'';
   window.scrollTo({top:0,behavior:'smooth'});
@@ -645,7 +649,7 @@ function renderReportList(){
   el.innerHTML=dates.map(d=>{
     const r=all[d];
     return `<div class="reportItem">
-      <div><b>${d}</b>　沟通 ${r.comm} · 新增 ${r.new} · VIP ${r.vip} · 入群 ${r.group} · 成交 ${r.deal}
+      <div><b>${d}</b>　沟通 ${r.comm} · 新增 ${r.new} · VIP ${r.vip} · 入群 ${r.group} · 成交 ${r.deal}${r.amt?' · 金额 '+fmtMoney(r.amt):''}
       ${r.note?'<div class="muted" style="margin-top:2px">复盘：'+esc(r.note)+'</div>':''}</div>
       <div style="display:flex;gap:6px;align-items:flex-start">
         <button class="btn small" onclick="loadReportForm('${d}')">编辑</button>
@@ -661,7 +665,7 @@ function copyReportText(){
   const f=store.get('focus',{})[date];
   const text=`📋 商务日报 | ${name} | ${date}\n`+
     (f?`🎯 今日聚焦：${f}\n`:'')+
-    `━━━━━━━━━━\n有效沟通：${r.comm}\n新增联系人：${r.new}\nVIP意向推进：${r.vip}\n入群：${r.group}\n成交：${r.deal}\n`+
+    `━━━━━━━━━━\n有效沟通：${r.comm}\n新增联系人：${r.new}\nVIP意向推进：${r.vip}\n入群：${r.group}\n成交：${r.deal}\n成交金额：${r.amt||0}\n`+
     (r.note?`━━━━━━━━━━\n今日复盘：${r.note}\n`:'')+
     (r.plan?`明日计划：${r.plan}`:'');
   copyText(text); toast('日报文本已复制，可直接粘贴到微信群');
@@ -687,6 +691,7 @@ function sumRange(reports, from, to, key){
 function getGoals(){ return store.get('goals',{comm:50,vip:10}); }
 function saveGoals(){
   store.set('goals',{comm:+document.getElementById('gComm').value||50, vip:+document.getElementById('gVip').value||10});
+  document.getElementById('goalSettings').open=false;
   renderBoard(); toast('目标已更新');
 }
 function streak(reports){
@@ -709,6 +714,7 @@ function renderBoard(){
     {v:sumRange(all,ws,t,'comm'), l:'本周有效沟通'},
     {v:sumRange(all,ws,t,'vip'), l:'本周VIP意向', sub:'目标 '+g.vip},
     {v:sumRange(all,ms,t,'deal'), l:'本月成交'},
+    {v:fmtMoney(sumRange(all,ms,t,'amt')), l:'本月成交金额（元）'},
     {v:streak(all), l:'连续打卡（天）'}
   ];
   document.getElementById('myStats').innerHTML=cards.map(c=>
@@ -791,7 +797,8 @@ function importFromText(){
     if(!team[h.name]) team[h.name]={reports:{}};
     team[h.name].reports[h.date]={
       comm:num('有效沟通'), new:num('新增联系人'), vip:num('VIP意向推进'),
-      group:num('入群'), deal:num('成交'), note:txt('今日复盘'), plan:txt('明日计划')
+      group:num('入群'), deal:num('成交'), amt:num('成交金额'),
+      note:txt('今日复盘'), plan:txt('明日计划')
     };
     team[h.name].importedAt=new Date().toISOString();
     names.add(h.name);
@@ -834,7 +841,7 @@ async function renderTeam(){
   if(!names.length) return;
   const ws=weekStart(), ms=monthStart(), t=today();
 
-  let tComm=0,tVip=0,tDeal=0,reportedToday=0;
+  let tComm=0,tVip=0,tDeal=0,tAmt=0,reportedToday=0;
   const rows=names.map(n=>{
     const r=team[n].reports;
     const row={
@@ -844,10 +851,11 @@ async function renderTeam(){
       weekVip:sumRange(r,ws,t,'vip'),
       weekGroup:sumRange(r,ws,t,'group'),
       monthDeal:sumRange(r,ms,t,'deal'),
+      monthAmt:sumRange(r,ms,t,'amt'),
       hasToday:!!r[t],
       last:Object.keys(r).sort().reverse()[0]||'—'
     };
-    tComm+=row.weekComm; tVip+=row.weekVip; tDeal+=row.monthDeal;
+    tComm+=row.weekComm; tVip+=row.weekVip; tDeal+=row.monthDeal; tAmt+=row.monthAmt;
     if(row.hasToday) reportedToday++;
     return row;
   }).sort((a,b)=>b.weekComm-a.weekComm);
@@ -857,7 +865,8 @@ async function renderTeam(){
     {v:reportedToday+'/'+names.length,l:'今日已报日报'},
     {v:tComm,l:'本周有效沟通'},
     {v:tVip,l:'本周VIP意向'},
-    {v:tDeal,l:'本月成交'}
+    {v:tDeal,l:'本月成交'},
+    {v:fmtMoney(tAmt),l:'本月成交金额（元）'}
   ].map(c=>`<div class="stat"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`).join('');
 
   // 7天团队总量
@@ -866,10 +875,10 @@ async function renderTeam(){
   document.getElementById('teamChart').innerHTML=barChart(days.map(d=>d.slice(5)),vals,0);
 
   document.getElementById('teamTable').innerHTML=
-    '<tr><th>成员</th><th>今日沟通</th><th>本周沟通</th><th>本周VIP</th><th>本周入群</th><th>本月成交</th><th>今日日报</th><th>最近上报</th></tr>'+
+    '<tr><th>成员</th><th>今日沟通</th><th>本周沟通</th><th>本周VIP</th><th>本周入群</th><th>本月成交</th><th>本月金额</th><th>今日日报</th><th>最近上报</th></tr>'+
     rows.map((r,i)=>`<tr>
       <td>${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}<b>${esc(r.name)}</b></td>
-      <td>${r.todayComm}</td><td><b>${r.weekComm}</b></td><td>${r.weekVip}</td><td>${r.weekGroup}</td><td>${r.monthDeal}</td>
+      <td>${r.todayComm}</td><td><b>${r.weekComm}</b></td><td>${r.weekVip}</td><td>${r.weekGroup}</td><td>${r.monthDeal}</td><td>${fmtMoney(r.monthAmt)}</td>
       <td>${r.hasToday?'<span class="badge ok">已报</span>':'<span class="badge warn">未报</span>'}</td>
       <td class="muted">${r.last}</td></tr>`).join('');
 }
