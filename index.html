@@ -355,8 +355,17 @@ function setName(){
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ===================== 视角与页签 ===================== */
+// 管理口令：页面中只保存哈希，原文不可见。修改口令需重新生成哈希。
+const MGR_HASH='12873eb';
+function djb2(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h.toString(36); }
 let curView='emp';
 function switchView(v){
+  if(v==='mgr' && !store.get('mgrok',false)){
+    const p=prompt('管理视角需要口令，请输入：');
+    if(p===null) return;
+    if(djb2(p.trim())!==MGR_HASH){ toast('口令不正确'); return; }
+    store.set('mgrok',true); toast('已解锁管理视角，本设备后续无需再输');
+  }
   curView=v;
   document.getElementById('vEmp').classList.toggle('on', v==='emp');
   document.getElementById('vMgr').classList.toggle('on', v==='mgr');
