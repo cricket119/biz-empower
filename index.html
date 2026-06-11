@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商务赋能平台</title>
+<style>
+  :root{
+    --bg:#faf9f5; --card:#ffffff; --ink:#1a1a17; --ink2:#6b6b63;
+    --line:#e8e6df; --accent:#2563eb; --accent-soft:#eef3fe;
+    --green:#5a8a2e; --green-soft:#eef5e6; --amber:#b45309; --amber-soft:#fdf3e3;
+    --red:#b91c1c; --red-soft:#fdecec; --radius:14px;
+    font-size:15px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px 80px}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700}
+  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--ink)}
+  .beta{font-size:.7rem;font-weight:500;color:var(--ink2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--card)}
+  .viewSwitch{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  .viewSwitch button{border:0;background:transparent;padding:9px 18px;font-size:.9rem;cursor:pointer;color:var(--ink2);font-family:inherit}
+  .viewSwitch button.on{background:var(--ink);color:#fff;font-weight:600}
+
+  nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch}
+  nav.tabs button{border:0;background:transparent;padding:11px 14px;font-size:.95rem;cursor:pointer;color:var(--ink2);white-space:nowrap;border-bottom:2.5px solid transparent;font-family:inherit}
+  nav.tabs button.on{color:var(--ink);font-weight:700;border-bottom-color:var(--ink)}
+
+  .focus{border-left:4px solid var(--ink);background:#f3f1ea;border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:20px 0}
+  .focus .k{font-size:.8rem;color:var(--ink2);margin-bottom:2px}
+  .focus .q{font-weight:700;font-size:1.05rem}
+  .focus .ans{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .focus input{flex:1;min-width:200px}
+  .focus .saved{margin-top:8px;font-size:.95rem}
+  .focus .saved b{color:var(--accent)}
+
+  section.page{display:none;padding-top:6px}
+  section.page.on{display:block}
+  h2.pageTitle{font-size:1.3rem;margin:14px 0 16px}
+  .muted{color:var(--ink2);font-size:.88rem}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .course{cursor:pointer;transition:box-shadow .15s}
+  .course:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  .course .icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px}
+  .course h3{font-size:1.05rem;margin-bottom:6px}
+  .course p{color:var(--ink2);font-size:.88rem;min-height:42px}
+  .pbarRow{display:flex;align-items:center;gap:10px;margin-top:14px}
+  .pbar{flex:1;height:7px;border-radius:4px;background:#ecece4;overflow:hidden}
+  .pbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+  .pbarRow span{font-size:.85rem;color:var(--ink2);white-space:nowrap}
+
+  .courseDetail{margin-top:16px}
+  .courseDetail .back{margin-bottom:14px}
+  .lesson{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:10px;overflow:hidden}
+  .lesson .head{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer}
+  .lesson .head:hover{background:#fbfaf7}
+  .lesson .head .num{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .lesson .head .t{flex:1;font-weight:600}
+  .lesson .head .done{font-size:.8rem;color:var(--green)}
+  .lesson .body{display:none;padding:4px 18px 16px 54px;color:#3a3a34;font-size:.93rem}
+  .lesson.open .body{display:block}
+  .lesson .body li{margin:7px 0 7px 18px}
+  .lesson .body .tip{background:var(--amber-soft);border-radius:8px;padding:9px 12px;margin-top:10px;font-size:.88rem}
+  .markBtn{margin-top:12px}
+
+  button.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 16px;font-size:.9rem;cursor:pointer;font-family:inherit;color:var(--ink)}
+  button.btn:hover{background:#f5f4ef}
+  button.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+  button.btn.primary:hover{background:#33332e}
+  button.btn.small{padding:5px 12px;font-size:.82rem}
+  button.btn.danger{color:var(--red)}
+
+  input,textarea,select{font-family:inherit;font-size:.95rem;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--card);color:var(--ink);width:100%}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  label.f{display:block;margin-bottom:14px}
+  label.f .lt{display:block;font-size:.85rem;color:var(--ink2);margin-bottom:5px;font-weight:600}
+  .numRow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+
+  /* AI chat */
+  .chatScenarios{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-size:.86rem;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chatBox{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;height:480px}
+  .chatLog{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:.93rem;white-space:pre-wrap;word-break:break-word}
+  .msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+  .msg.ai{align-self:flex-start;background:#f3f1ea;border-bottom-left-radius:4px}
+  .msg.sys{align-self:center;background:transparent;color:var(--ink2);font-size:.8rem;text-align:center}
+  .chatInput{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+  .chatInput textarea{resize:none;height:46px}
+  .aiBanner{background:var(--amber-soft);border-radius:10px;padding:10px 14px;font-size:.87rem;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  /* dashboard */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .stat .v{font-size:1.7rem;font-weight:800;line-height:1.2}
+  .stat .l{font-size:.8rem;color:var(--ink2)}
+  .stat .sub{font-size:.75rem;color:var(--green);margin-top:2px}
+  .chartCard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;overflow-x:auto}
+  .chartCard h3{font-size:.95rem;margin-bottom:10px}
+  .goalRow{margin:12px 0}
+  .goalRow .gt{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:5px}
+
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:.78rem;color:var(--ink2);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  .tableWrap{overflow-x:auto}
+  .badge{display:inline-block;font-size:.74rem;border-radius:6px;padding:1px 8px}
+  .badge.ok{background:var(--green-soft);color:var(--green)}
+  .badge.warn{background:var(--red-soft);color:var(--red)}
+
+  .reportItem{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:.9rem;flex-wrap:wrap}
+  .reportItem:last-child{border-bottom:0}
+  .toolRow{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 22px;border-radius:999px;font-size:.88rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+  .toast.show{opacity:1}
+  .nameTag{font-size:.85rem;color:var(--ink2);cursor:pointer}
+  .nameTag b{color:var(--ink)}
+  details.settings{margin-top:14px}
+  details.settings summary{cursor:pointer;font-size:.88rem;color:var(--ink2)}
+  .settingsBody{margin-top:12px;display:grid;gap:10px;grid-template-columns:1fr 1fr;align-items:end}
+  @media(max-width:700px){.settingsBody{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand"><span class="dot"></span>商务赋能平台 <span class="beta">Beta</span></div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span class="nameTag" id="nameTag" onclick="setName()"></span>
+      <div class="viewSwitch">
+        <button id="vEmp" class="on" onclick="switchView('emp')">员工视角</button>
+        <button id="vMgr" onclick="switchView('mgr')">管理视角</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="empTabs">
+    <button data-p="learn" class="on">📘 学习中心</button>
+    <button data-p="ai">🤖 AI训练室</button>
+    <button data-p="report">📝 日报录入</button>
+    <button data-p="board">📊 我的看板</button>
+  </nav>
+  <nav class="tabs" id="mgrTabs" style="display:none">
+    <button data-p="team" class="on">📈 团队看板</button>
+    <button data-p="import">📥 数据汇总</button>
+  </nav>
+
+  <div class="focus" id="focusBox">
+    <div class="k">今日聚焦目标</div>
+    <div class="q">今天最重要的一个数字是什么？完成几个有效沟通？推进几个VIP意向？</div>
+    <div id="focusBody"></div>
+  </div>
+
+  <!-- ===================== 学习中心 ===================== -->
+  <section class="page on" id="page-learn">
+    <div id="courseList">
+      <h2 class="pageTitle">学习中心</h2>
+      <div class="grid2" id="courseGrid"></div>
+    </div>
+    <div id="courseDetail" class="courseDetail" style="display:none"></div>
+  </section>
+
+  <!-- ===================== AI训练室 ===================== -->
+  <section class="page" id="page-ai">
+    <h2 class="pageTitle">AI训练室</h2>
+    <p class="muted" style="margin-bottom:12px">选择一个陪练场景，AI 会扮演客户和你实战对练，结束后输入「点评」获取改进建议。</p>
+    <div class="chatScenarios" id="scenarioChips"></div>
+    <div class="aiBanner" id="aiBanner" style="display:none">
+      ⚠️ 还未配置 AI 接口。可在下方「接口设置」中填入公司的 API Key（支持 DeepSeek / Kimi / 通义等），或点击
+      <button class="btn small" onclick="copyPrompt()">复制完整提示词</button> 粘贴到任意 AI 网页中使用。
+    </div>
+    <div class="chatBox">
+      <div class="chatLog" id="chatLog"></div>
+      <div class="chatInput">
+        <textarea id="chatText" placeholder="输入你的回复…（Enter 发送，Shift+Enter 换行）"></textarea>
+        <button class="btn primary" onclick="sendChat()">发送</button>
+      </div>
+    </div>
+    <div class="toolRow">
+      <button class="btn small" onclick="resetChat()">重新开始本场景</button>
+      <button class="btn small" onclick="copyPrompt()">复制提示词到其他AI</button>
+    </div>
+    <details class="settings">
+      <summary>⚙️ 接口设置（保存在本机浏览器，不会上传）</summary>
+      <div class="settingsBody">
+        <label class="f"><span class="lt">API 地址（OpenAI 兼容格式）</span><input id="aiBase" placeholder="https://api.deepseek.com"></label>
+        <label class="f"><span class="lt">模型名称</span><input id="aiModel" placeholder="deepseek-chat"></label>
+        <label class="f" style="grid-column:1/-1"><span class="lt">API Key</span><input id="aiKey" type="password" placeholder="sk-…"></label>
+        <button class="btn primary" onclick="saveAiCfg()">保存设置</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== 日报录入 ===================== -->
+  <section class="page" id="page-report">
+    <h2 class="pageTitle">日报录入</h2>
+    <div class="card" style="margin-bottom:16px">
+      <label class="f" style="max-width:220px"><span class="lt">日期</span><input type="date" id="rDate"></label>
+      <div class="numRow">
+        <label class="f"><span class="lt">有效沟通（实质回复）</span><input type="number" min="0" id="rComm" placeholder="0"></label>
+        <label class="f"><span class="lt">新增联系人</span><input type="number" min="0" id="rNew" placeholder="0"></label>
+        <label class="f"><span class="lt">VIP意向推进</span><input type="number" min="0" id="rVip" placeholder="0"></label>
+        <label class="f"><span class="lt">入群人数</span><input type="number" min="0" id="rGroup" placeholder="0"></label>
+        <label class="f"><span class="lt">成交单数</span><input type="number" min="0" id="rDeal" placeholder="0"></label>
+      </div>
+      <label class="f"><span class="lt">今日复盘（卡点 / 有效动作）</span><textarea id="rNote" rows="2" placeholder="例：下午3-5点回复率最高；2位客户卡在价格异议…"></textarea></label>
+      <label class="f"><span class="lt">明日计划</span><textarea id="rPlan" rows="2" placeholder="例：优先跟进A类客户5位，冲刺有效沟通50人…"></textarea></label>
+      <div class="toolRow" style="margin-bottom:0">
+        <button class="btn primary" onclick="saveReport()">保存日报</button>
+        <button class="btn" onclick="copyReportText()">复制日报文本（发微信群）</button>
+        <button class="btn" onclick="exportMyData()">导出我的数据（发给主管）</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:.95rem;margin-bottom:8px">最近记录</h3>
+      <div id="reportList"></div>
+    </div>
+  </section>
+
+  <!-- ===================== 我的看板 ===================== -->
+  <section class="page" id="page-board">
+    <h2 class="pageTitle">我的看板</h2>
+    <div class="stats" id="myStats"></div>
+    <div class="chartCard"><h3>近14天 · 有效沟通趋势</h3><div id="myChart"></div></div>
+    <div class="chartCard">
+      <h3>目标进度</h3>
+      <div id="myGoals"></div>
+      <details class="settings"><summary>⚙️ 调整目标</summary>
+        <div class="settingsBody">
+          <label class="f"><span class="lt">每日有效沟通目标</span><input type="number" id="gComm" min="1"></label>
+          <label class="f"><span class="lt">每周VIP意向目标</span><input type="number" id="gVip" min="1"></label>
+          <button class="btn primary" onclick="saveGoals()">保存目标</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ===================== 管理 · 团队看板 ===================== -->
+  <section class="page" id="page-team">
+    <h2 class="pageTitle">团队看板</h2>
+    <div id="teamEmpty" class="card" style="display:none">
+      <p>还没有团队数据。让每位同事在「日报录入」页点击<b>「复制日报文本」</b>发到微信群，你把群里的日报消息复制后，到「数据汇总」页<b>粘贴导入</b>即可自动汇总。</p>
+    </div>
+    <div id="teamBody">
+      <div class="stats" id="teamStats"></div>
+      <div class="chartCard"><h3>近7天 · 团队有效沟通总量</h3><div id="teamChart"></div></div>
+      <div class="card tableWrap">
+        <h3 style="font-size:.95rem;margin-bottom:8px">成员明细（按本周有效沟通排序）</h3>
+        <table id="teamTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 管理 · 数据汇总 ===================== -->
+  <section class="page" id="page-import">
+    <h2 class="pageTitle">数据汇总</h2>
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="font-size:.95rem;margin-bottom:6px">📋 粘贴微信群日报（推荐）</h3>
+      <p class="muted" style="margin-bottom:10px">员工每天用「复制日报文本」把日报发到微信群。你只需把群里的日报消息整段复制，粘贴到下面，点解析即可自动汇总——可以一次粘贴多人、多天的日报，重复导入自动覆盖更新。</p>
+      <textarea id="pasteArea" rows="7" placeholder="把微信群里的日报消息粘贴到这里，例如：&#10;&#10;📋 商务日报 | 张三 | 2026-06-11&#10;有效沟通：42&#10;新增联系人：8&#10;VIP意向推进：3&#10;入群：2&#10;成交：1&#10;…（可以连同其他聊天内容一起粘贴，会自动识别）"></textarea>
+      <div class="toolRow" style="margin-bottom:0">
+        <button class="btn primary" onclick="importFromText()">解析并导入</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="font-size:.95rem;margin-bottom:6px">📁 导入数据文件（备用）</h3>
+      <p class="muted" style="margin-bottom:10px">也可以导入成员在「日报录入」页导出的 JSON 文件（可多选）：</p>
+      <input type="file" id="importFile" accept=".json" multiple onchange="importTeamFiles(this.files)">
+    </div>
+    <div class="card">
+      <h3 style="font-size:.95rem;margin-bottom:8px">已导入成员</h3>
+      <div id="memberList"></div>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   数据存取（全部保存在本机浏览器 localStorage，无服务器）
+============================================================ */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('swfn_'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ localStorage.setItem('swfn_'+k, JSON.stringify(v)); }
+};
+const pad = n => String(n).padStart(2,'0');
+const dstr = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today = () => dstr(new Date());
+function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return dstr(d); }
+function weekStart(){ const d=new Date(); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return dstr(d); } // 周一
+function monthStart(){ const d=new Date(); return dstr(new Date(d.getFullYear(), d.getMonth(), 1)); }
+
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ===================== 姓名 ===================== */
+function renderName(){
+  const n = store.get('name','');
+  document.getElementById('nameTag').innerHTML = n ? ('👤 <b>'+esc(n)+'</b>') : '👤 点此设置姓名';
+}
+function setName(){
+  const n = prompt('请输入你的姓名（用于日报导出与团队汇总）', store.get('name',''));
+  if(n!==null && n.trim()){ store.set('name', n.trim()); renderName(); }
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ===================== 视角与页签 ===================== */
+let curView='emp';
+function switchView(v){
+  curView=v;
+  document.getElementById('vEmp').classList.toggle('on', v==='emp');
+  document.getElementById('vMgr').classList.toggle('on', v==='mgr');
+  document.getElementById('empTabs').style.display = v==='emp' ? 'flex':'none';
+  document.getElementById('mgrTabs').style.display = v==='mgr' ? 'flex':'none';
+  document.getElementById('focusBox').style.display = v==='emp' ? 'block':'none';
+  switchPage(v==='emp' ? 'learn' : 'team');
+}
+function switchPage(p){
+  document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('on', s.id==='page-'+p));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.p===p));
+  if(p==='board') renderBoard();
+  if(p==='team') renderTeam();
+  if(p==='import') renderMembers();
+  if(p==='report') renderReportList();
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>switchPage(b.dataset.p));
+
+/* ===================== 今日聚焦 ===================== */
+function renderFocus(){
+  const box=document.getElementById('focusBody');
+  const f=store.get('focus',{});
+  const t=today();
+  if(f[t]){
+    box.innerHTML = '<div class="saved">今日聚焦：<b>'+esc(f[t])+'</b> <button class="btn small" onclick="editFocus()" style="margin-left:8px">修改</button></div>';
+  }else{
+    box.innerHTML = '<div class="ans"><input id="focusInput" placeholder="例：今天完成 50 个有效沟通，推进 2 个 VIP 意向"><button class="btn primary" onclick="saveFocus()">锁定今天的目标</button></div>';
+  }
+}
+function saveFocus(){
+  const v=document.getElementById('focusInput').value.trim();
+  if(!v) return toast('先写下今天最重要的目标');
+  const f=store.get('focus',{}); f[today()]=v; store.set('focus',f); renderFocus(); toast('目标已锁定，开干！💪');
+}
+function editFocus(){
+  const f=store.get('focus',{}); delete f[today()]; store.set('focus',f); renderFocus();
+  setTimeout(()=>{const i=document.getElementById('focusInput'); if(i) i.focus();},50);
+}
+
+/* ===================== 学习中心（课程内容可在此数组中修改/增删） ===================== */
+const COURSES=[
+ {id:'comm50', icon:'📞', bg:'#eef3fe', title:'有效沟通50人打法',
+  desc:'如何在一天内完成50次有实质回复的客户对话，包含时段规划与话术节奏',
+  lessons:[
+   {t:'什么算「有效沟通」', c:['有效沟通 = 客户给出<b>实质回复</b>（提问、表态、提供个人情况），不是已读、不是「嗯/好的」。','统一口径才能让日报数字有意义：群发触达不算，客户单方面收到不算。','自检：这条对话如果截图给主管看，能看出客户在「往前走」吗？'],
+    tip:'每天先把昨天「差一步就有效」的对话列出来，优先补这些，成本最低。'},
+   {t:'一天的时段规划', c:['<b>9:00-10:00</b> 处理隔夜消息 + 给A类客户发定制开场（10-15人）。','<b>10:00-12:00</b> 新客户首触达高峰，目标15个对话开启。','<b>14:00-15:00</b> 跟进上午已读未回，换角度再触达一次。','<b>15:00-17:00</b> 回复率最高时段，集中深聊与VIP推进。','<b>20:00-21:30</b> 客户下班后的黄金窗口，处理白天没回的B类客户。'],
+    tip:'50人 = 15个新开启 + 25个跟进激活 + 10个深聊推进，不是50个全新对话。'},
+   {t:'开场话术节奏', c:['第一句永远带<b>对方利益</b>：「看到您之前关注过XX，最近政策有个变化对您有利…」','禁止三连发：发一条，等。客户不回，4小时后换信息增量再发，不复读。','用「选择题」代替「问答题」：「您更关心成本还是周期？」回复率翻倍。'],
+    tip:'准备3套开场模板（政策类/案例类/福利类），轮换使用并记录哪套回复率最高。'},
+   {t:'已读不回的激活', c:['24小时未回 → 发价值增量（新案例、新政策、新名额），不发「在吗」。','3天未回 → 降一档跟进频率，移入B类，每周一次触达。','激活神器：真实客户的进展截图（打码）+ 一句「想到您也在看这个」。'],
+    tip:'把每天的「已读不回」记到日报复盘里，周五统一分析哪类客户最容易卡住。'},
+   {t:'每日复盘动作', c:['下班前5分钟：今天50个对话里，<b>哪3句话效果最好？哪3句话聊死了？</b>','把聊死的对话发到AI训练室复盘，让AI给出改写版本。','回复率连续3天下滑 → 大概率是模板老化，立刻换开场模板。'],
+    tip:'复盘写进日报的「今日复盘」栏，主管能在团队看板里看到共性问题。'}
+  ]},
+ {id:'vip', icon:'👑', bg:'#fdf3e3', title:'VIP社群转化指南',
+  desc:'从破冰到引导入群的全流程，如何让每次沟通都与VIP产生关联',
+  lessons:[
+   {t:'VIP社群的定位话术', c:['不说「拉您进群」，说「给您<b>申请一个席位</b>」：群是稀缺资源，不是营销渠道。','一句话定位：「群里都是和您情况类似、已经在推进的客户，第一手进展和政策都在里面同步。」','给画面感：说出群里最近一件具体的事（某客户拿到结果、某政策更新解读）。'],
+    tip:'每周从群里挑1-2条可以外发的「群价值瞬间」，作为本周邀请素材。'},
+   {t:'破冰三步法', c:['第一步 <b>认同</b>：先接住客户的疑虑，「您这个顾虑特别正常，上个月有位客户也是这样。」','第二步 <b>案例</b>：讲那位客户后来发生了什么（细节要真实具体）。','第三步 <b>钩子</b>：「他当时的完整方案我发在VIP群里了，我帮您申请进去看？」'],
+    tip:'每次沟通结束前问自己：这次对话有没有埋下一个「群里有答案」的钩子？'},
+   {t:'入群邀请的时机', c:['最佳时机：客户<b>问出第2个具体问题</b>时——说明已从围观转向研究。','次佳时机：客户表达犹豫时——「您先别急着定，进群看看别人怎么选的。」','错误时机：刚加上好友就邀请，入群率低且消耗信任。'],
+    tip:'被拒绝一次不要追问，7天后用新的群价值瞬间再邀请一次，二次邀请成功率约40%。'},
+   {t:'群内激活与转化', c:['新人入群24小时内，安排一次「群内点名欢迎 + 私聊回访」组合动作。','群里只做价值输出与答疑，<b>逼单永远在私聊</b>。','看到客户在群里发言/点赞，2小时内私聊跟进：「看您关注XX，正好我这有份详细资料。」'],
+    tip:'每天扫一遍群活跃名单，活跃客户就是当天最该深聊的客户。'}
+  ]},
+ {id:'follow', icon:'📅', bg:'#eef5e6', title:'客户跟进节奏与分层',
+  desc:'A/B/C类客户的差异化跟进策略，避免过度打扰的同时保持高存在感',
+  lessons:[
+   {t:'分层标准', c:['<b>A类（本月可成交）</b>：主动问过价格/流程/材料，有明确时间预期。每天跟进。','<b>B类（3个月内有意向）</b>：持续互动但未谈到方案细节。每周2次。','<b>C类（长线培育）</b>：偶尔回复、看朋友圈但少互动。每周1次轻触达。','每周五下班前重新分层一次，标准从严：宁可降级，不可虚高。'],
+    tip:'A类客户控制在15-20人以内，超过说明分层虚高，会稀释你的火力。'},
+   {t:'差异化跟进动作', c:['A类：每天有进展型触达——新材料、新名额、方案推进的具体下一步。','B类：每周一次价值型触达 + 一次轻互动（朋友圈点赞评论）。','C类：朋友圈持续刷存在感 + 每周一条「无压力」信息（政策简讯/案例短讯）。'],
+    tip:'高存在感≠高频轰炸。C类客户被打扰3次就会删人，价值感是唯一的免死金牌。'},
+   {t:'升降级信号', c:['升级信号：客户开始问「具体到自己」的问题（费用、周期、自身条件）。','降级信号：连续3次价值触达无回应；或明确说「最近不考虑」。','降级不删除：今天的C类，政策一变就是明天的A类。'],
+    tip:'每次升降级在备注里写一句原因，三个月后你会拥有一份精准的客户地图。'},
+   {t:'朋友圈经营', c:['黄金比例：5条专业内容 + 3条客户见证 + 2条个人生活，营造「靠谱的活人」。','发圈时间贴着客户作息：早8点、午12点半、晚9点。','客户见证永远打码，专业内容永远说人话（一句话讲清对客户的影响）。'],
+    tip:'朋友圈是C类客户唯一的培育渠道，断更一周等于放弃整个C类池。'}
+  ]},
+ {id:'overseas', icon:'✈️', bg:'#eef3fe', title:'海外项目成交话术',
+  desc:'美国/新加坡项目的核心卖点提炼与常见异议处理，含10人目标冲刺策略',
+  lessons:[
+   {t:'核心卖点的讲法', c:['卖点不是项目参数，是<b>客户的处境变化</b>：讲「您的孩子/资产/身份会怎样」，不讲条款本身。','美国项目主打：确定性与稀缺窗口——「政策窗口期内锁定排期」。','新加坡项目主打：安全与效率——「亚洲枢纽、低税务摩擦、流程可控」。','一个客户只主推一个项目，对比留给客户问，不主动制造选择困难。'],
+    tip:'把每个项目的卖点压缩成一句20字以内的话，说不清就说明你还没吃透。'},
+   {t:'常见异议处理', c:['「太贵了」→ 拆成时间账：「分摊到您关心的N年周期里，每年其实是…，而窗口期过了成本只会更高。」','「再考虑考虑」→ 给出具体的下一步：「没问题，我周四把最新名额情况同步您，您看可以吗？」（把开放结局变成约定）','「别家更便宜」→ 不贬低同行，讲交付确定性：「价格差通常差在XX环节，这块出问题最后花的钱更多。」','「政策会不会变」→ 顺势推紧迫感：「正因为会变，现在的规则才是最确定的。」'],
+    tip:'每遇到一个新异议，当天记进日报复盘，并到AI训练室对练3轮。'},
+   {t:'10人目标冲刺策略', c:['倒推法：成交1人 ≈ 需3个A类深度推进 ≈ 9个VIP意向 ≈ 150个有效沟通。10人目标先换算成每天的过程数字。','冲刺期三件套：每天盘A类名单、每天推进1个卡点客户、每周做1次集中逼单日。','借力：把最难的3个客户带到团队会上过案，主管和老员工的一句话可能就是临门一脚。'],
+    tip:'冲刺看板就在「我的看板」页——盯过程数字，结果数字会自己长出来。'},
+   {t:'签约前的临门一脚', c:['客户犹豫期最怕「失联」：签约前每天一条轻信息，保持温度但不催。','用「流程感」代替「催促感」：「我先帮您把材料清单准备好，定了随时能启动，不耽误排期。」','成交后24小时内做一次超预期动作（手写欢迎卡/专属群/进度表），转介绍从这里开始。'],
+    tip:'每单成交后24小时内复盘：客户最初的异议是什么？记下来，这是你最值钱的素材库。'}
+  ]}
+];
+
+let openCourse=null;
+function renderCourses(){
+  const prog=store.get('progress',{});
+  document.getElementById('courseGrid').innerHTML = COURSES.map(c=>{
+    const done=(prog[c.id]||[]).length, total=c.lessons.length, pct=Math.round(done/total*100);
+    return `<div class="card course" onclick="showCourse('${c.id}')">
+      <div class="icon" style="background:${c.bg}">${c.icon}</div>
+      <h3>${c.title}</h3><p>${c.desc}</p>
+      <div class="pbarRow"><div class="pbar"><i style="width:${pct}%;${pct===100?'background:var(--green)':''}"></i></div><span>${pct}% 已完成</span></div>
+    </div>`;
+  }).join('');
+}
+function showCourse(id){
+  openCourse=id;
+  const c=COURSES.find(x=>x.id===id);
+  const prog=store.get('progress',{}); const done=prog[id]||[];
+  document.getElementById('courseList').style.display='none';
+  const d=document.getElementById('courseDetail');
+  d.style.display='block';
+  d.innerHTML = `<button class="btn back" onclick="closeCourse()">← 返回学习中心</button>
+    <h2 class="pageTitle">${c.icon} ${c.title}</h2>
+    <p class="muted" style="margin-bottom:14px">${c.desc}</p>` +
+    c.lessons.map((l,i)=>`
+    <div class="lesson" id="lesson-${i}">
+      <div class="head" onclick="document.getElementById('lesson-${i}').classList.toggle('open')">
+        <span class="num">${i+1}</span><span class="t">${l.t}</span>
+        ${done.includes(i)?'<span class="done">✓ 已学完</span>':''}
+      </div>
+      <div class="body">
+        <ul>${l.c.map(x=>'<li>'+x+'</li>').join('')}</ul>
+        ${l.tip?'<div class="tip">💡 '+l.tip+'</div>':''}
+        <button class="btn small markBtn" onclick="event.stopPropagation();toggleLesson('${id}',${i})">${done.includes(i)?'取消标记':'标记为已学完 ✓'}</button>
+      </div>
+    </div>`).join('');
+}
+function closeCourse(){
+  openCourse=null;
+  document.getElementById('courseDetail').style.display='none';
+  document.getElementById('courseList').style.display='block';
+  renderCourses();
+}
+function toggleLesson(cid,i){
+  const prog=store.get('progress',{}); const arr=prog[cid]||[];
+  const idx=arr.indexOf(i);
+  if(idx>=0) arr.splice(idx,1); else arr.push(i);
+  prog[cid]=arr; store.set('progress',prog);
+  showCourse(cid);
+}
+
+/* ===================== AI训练室 ===================== */
+const SCENARIOS=[
+ {id:'price', label:'💰 价格异议陪练', sys:'你是一位正在咨询海外项目（如美国/新加坡投资移民或海外置业）的潜在客户，对价格非常敏感，反复表示"太贵了""别家更便宜""要回去商量"。请扮演这位客户与商务顾问对练：每次只说一句客户会说的话，态度真实、有点难缠但不是完全拒绝。当对方（顾问）输入"点评"时，跳出角色，从话术结构、共情、推进节奏三方面给出具体改进建议，并示范一段更好的回复。请使用中文。'},
+ {id:'cold', label:'🧊 已读不回破冰', sys:'你是一位对海外项目有过初步兴趣、但最近已读不回的客户。商务顾问会尝试用各种信息重新激活你。请扮演这位客户：开始时高冷敷衍（"哦""有空再说"），只有当对方提供了真正有价值或新鲜的信息时才逐渐打开话匣子。当对方输入"点评"时，跳出角色，分析对方哪些触达有效、哪些是无效打扰，并给出3条破冰信息的示范。请使用中文。'},
+ {id:'doubt', label:'✈️ 海外项目疑虑', sys:'你是一位考虑美国或新加坡项目的客户，主要疑虑是：政策会不会变、资金安全、周期太长、家人不支持。请扮演这位客户与商务顾问对练，每轮抛出一个真实的疑虑，并根据对方回答追问。当对方输入"点评"时，跳出角色，评估对方的异议处理是否做到"先共情-再案例-后推进"，并给出改进示范。请使用中文。'},
+ {id:'vip', label:'👑 VIP入群被拒', sys:'你是一位被商务顾问邀请加入VIP客户社群但拒绝了的客户（理由如"群太多了""没时间看""不想被推销"）。请扮演这位客户：对入群有抵触但对项目本身仍有兴趣。当对方输入"点评"时，跳出角色，分析对方的邀请话术问题，讲解"席位感、价值瞬间、二次邀请"三个技巧，并示范一段更好的邀请。请使用中文。'},
+ {id:'polish', label:'✨ 话术润色', sys:'你是一位资深商务话术教练。用户会发来他们写给客户的消息或话术，请你：1) 指出问题（最多3点，直说不绕）；2) 给出改写后的版本（保持用户的语气，更口语、更有推进力）；3) 用一句话说明改动的核心逻辑。请使用中文。'},
+ {id:'free', label:'💬 自由提问', sys:'你是商务部的AI助教，熟悉客户开发、社群运营、海外项目（美国/新加坡）销售。回答要具体、可执行、口语化，多给话术示范，少讲大道理。请使用中文。'}
+];
+let curScenario=SCENARIOS[0];
+let chatMsgs=[];
+
+function renderScenarios(){
+  document.getElementById('scenarioChips').innerHTML = SCENARIOS.map(s=>
+    `<button class="chip ${s.id===curScenario.id?'on':''}" onclick="pickScenario('${s.id}')">${s.label}</button>`).join('');
+}
+function pickScenario(id){
+  curScenario=SCENARIOS.find(s=>s.id===id);
+  renderScenarios(); resetChat();
+}
+function resetChat(){
+  chatMsgs=[];
+  const log=document.getElementById('chatLog');
+  log.innerHTML='<div class="msg sys">已进入「'+curScenario.label+'」场景。直接开始对话，输入「点评」可获取AI教练的复盘建议。</div>';
+  checkAiCfg();
+}
+function addMsg(role, text){
+  const log=document.getElementById('chatLog');
+  const div=document.createElement('div');
+  div.className='msg '+(role==='user'?'user':role==='ai'?'ai':'sys');
+  div.textContent=text;
+  log.appendChild(div); log.scrollTop=log.scrollHeight;
+  return div;
+}
+function aiCfg(){ return store.get('aicfg',{base:'',model:'',key:''}); }
+function checkAiCfg(){
+  document.getElementById('aiBanner').style.display = aiCfg().key ? 'none':'flex';
+}
+function saveAiCfg(){
+  store.set('aicfg',{
+    base:document.getElementById('aiBase').value.trim().replace(/\/+$/,'') || 'https://api.deepseek.com',
+    model:document.getElementById('aiModel').value.trim() || 'deepseek-chat',
+    key:document.getElementById('aiKey').value.trim()
+  });
+  checkAiCfg(); toast('接口设置已保存');
+}
+function loadAiCfgUI(){
+  const c=aiCfg();
+  document.getElementById('aiBase').value=c.base||'';
+  document.getElementById('aiModel').value=c.model||'';
+  document.getElementById('aiKey').value=c.key||'';
+}
+async function sendChat(){
+  const ta=document.getElementById('chatText');
+  const text=ta.value.trim(); if(!text) return;
+  ta.value='';
+  addMsg('user',text);
+  chatMsgs.push({role:'user',content:text});
+  const c=aiCfg();
+  if(!c.key){
+    addMsg('sys','未配置 API Key —— 点击上方「复制完整提示词」，粘贴到任意AI网页（豆包/Kimi/DeepSeek网页版等）即可继续对练。');
+    return;
+  }
+  const thinking=addMsg('ai','思考中…');
+  try{
+    const res=await fetch((c.base||'https://api.deepseek.com')+'/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.key},
+      body:JSON.stringify({model:c.model||'deepseek-chat',messages:[{role:'system',content:curScenario.sys},...chatMsgs],temperature:0.8})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status+'：'+(await res.text()).slice(0,200));
+    const data=await res.json();
+    const reply=data.choices?.[0]?.message?.content || '（接口返回为空）';
+    thinking.textContent=reply;
+    chatMsgs.push({role:'assistant',content:reply});
+  }catch(e){
+    thinking.textContent='⚠️ 请求失败：'+e.message+'\n请检查接口设置中的地址、模型名和Key是否正确。';
+    chatMsgs.pop();
+  }
+}
+document.getElementById('chatText').addEventListener('keydown',e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+});
+function copyPrompt(){
+  let text='【角色设定】\n'+curScenario.sys;
+  if(chatMsgs.length){
+    text+='\n\n【已有对话】\n'+chatMsgs.map(m=>(m.role==='user'?'顾问：':'客户：')+m.content).join('\n')+'\n\n请继续扮演并回应。';
+  }
+  copyText(text); toast('提示词已复制，可粘贴到任意AI对话框');
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t); }
+  else{
+    const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+}
+
+/* ===================== 日报 ===================== */
+const FIELDS=[['comm','有效沟通'],['new','新增联系人'],['vip','VIP意向'],['group','入群'],['deal','成交']];
+function getReports(){ return store.get('reports',{}); }
+function saveReport(){
+  const date=document.getElementById('rDate').value;
+  if(!date) return toast('请选择日期');
+  const r={
+    comm:+document.getElementById('rComm').value||0,
+    new:+document.getElementById('rNew').value||0,
+    vip:+document.getElementById('rVip').value||0,
+    group:+document.getElementById('rGroup').value||0,
+    deal:+document.getElementById('rDeal').value||0,
+    note:document.getElementById('rNote').value.trim(),
+    plan:document.getElementById('rPlan').value.trim()
+  };
+  const all=getReports(); all[date]=r; store.set('reports',all);
+  renderReportList(); toast('日报已保存 ✓');
+}
+function loadReportForm(date){
+  const all=getReports(); const r=all[date]||{};
+  document.getElementById('rDate').value=date;
+  document.getElementById('rComm').value=r.comm??'';
+  document.getElementById('rNew').value=r.new??'';
+  document.getElementById('rVip').value=r.vip??'';
+  document.getElementById('rGroup').value=r.group??'';
+  document.getElementById('rDeal').value=r.deal??'';
+  document.getElementById('rNote').value=r.note||'';
+  document.getElementById('rPlan').value=r.plan||'';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function delReport(date){
+  if(!confirm('删除 '+date+' 的日报？')) return;
+  const all=getReports(); delete all[date]; store.set('reports',all); renderReportList();
+}
+function renderReportList(){
+  const all=getReports();
+  const dates=Object.keys(all).sort().reverse().slice(0,14);
+  const el=document.getElementById('reportList');
+  if(!dates.length){ el.innerHTML='<p class="muted">还没有记录，填写上方表单保存第一份日报吧。</p>'; return; }
+  el.innerHTML=dates.map(d=>{
+    const r=all[d];
+    return `<div class="reportItem">
+      <div><b>${d}</b>　沟通 ${r.comm} · 新增 ${r.new} · VIP ${r.vip} · 入群 ${r.group} · 成交 ${r.deal}
+      ${r.note?'<div class="muted" style="margin-top:2px">复盘：'+esc(r.note)+'</div>':''}</div>
+      <div style="display:flex;gap:6px;align-items:flex-start">
+        <button class="btn small" onclick="loadReportForm('${d}')">编辑</button>
+        <button class="btn small danger" onclick="delReport('${d}')">删除</button>
+      </div></div>`;
+  }).join('');
+}
+function copyReportText(){
+  const date=document.getElementById('rDate').value || today();
+  const all=getReports(); const r=all[date];
+  if(!r) return toast('请先保存该日期的日报');
+  const name=store.get('name','')||'（未设置姓名）';
+  const f=store.get('focus',{})[date];
+  const text=`📋 商务日报 | ${name} | ${date}\n`+
+    (f?`🎯 今日聚焦：${f}\n`:'')+
+    `━━━━━━━━━━\n有效沟通：${r.comm}\n新增联系人：${r.new}\nVIP意向推进：${r.vip}\n入群：${r.group}\n成交：${r.deal}\n`+
+    (r.note?`━━━━━━━━━━\n今日复盘：${r.note}\n`:'')+
+    (r.plan?`明日计划：${r.plan}`:'');
+  copyText(text); toast('日报文本已复制，可直接粘贴到微信群');
+}
+function exportMyData(){
+  const name=store.get('name','');
+  if(!name){ toast('请先点击右上角设置姓名'); setName(); return; }
+  const data={app:'swfn',name,exportedAt:new Date().toISOString(),reports:getReports()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='商务日报_'+name+'_'+today()+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('已导出，把文件发给主管即可');
+}
+
+/* ===================== 我的看板 ===================== */
+function sumRange(reports, from, to, key){
+  let s=0;
+  for(const d in reports){ if(d>=from && (!to||d<=to)) s+=(+reports[d][key]||0); }
+  return s;
+}
+function getGoals(){ return store.get('goals',{comm:50,vip:10}); }
+function saveGoals(){
+  store.set('goals',{comm:+document.getElementById('gComm').value||50, vip:+document.getElementById('gVip').value||10});
+  renderBoard(); toast('目标已更新');
+}
+function streak(reports){
+  let n=0;
+  for(let i=0;i<365;i++){
+    const d=daysAgo(i);
+    if(reports[d]) n++;
+    else if(i===0) continue; // 今天还没填不打断连续
+    else break;
+  }
+  return n;
+}
+function renderBoard(){
+  const all=getReports(); const ws=weekStart(), ms=monthStart(), t=today();
+  const g=getGoals();
+  document.getElementById('gComm').value=g.comm;
+  document.getElementById('gVip').value=g.vip;
+  const cards=[
+    {v:(all[t]?.comm)??0, l:'今日有效沟通', sub:'目标 '+g.comm},
+    {v:sumRange(all,ws,t,'comm'), l:'本周有效沟通'},
+    {v:sumRange(all,ws,t,'vip'), l:'本周VIP意向', sub:'目标 '+g.vip},
+    {v:sumRange(all,ms,t,'deal'), l:'本月成交'},
+    {v:streak(all), l:'连续打卡（天）'}
+  ];
+  document.getElementById('myStats').innerHTML=cards.map(c=>
+    `<div class="stat"><div class="v">${c.v}</div><div class="l">${c.l}</div>${c.sub?'<div class="sub">'+c.sub+'</div>':''}</div>`).join('');
+
+  // 14天柱状图
+  const days=[]; for(let i=13;i>=0;i--) days.push(daysAgo(i));
+  const vals=days.map(d=>(+all[d]?.comm)||0);
+  document.getElementById('myChart').innerHTML=barChart(days.map(d=>d.slice(5)), vals, g.comm);
+
+  // 目标进度
+  const todayComm=(all[t]?.comm)??0;
+  const weekVip=sumRange(all,ws,t,'vip');
+  document.getElementById('myGoals').innerHTML=
+    goalBar('今日有效沟通', todayComm, g.comm)+
+    goalBar('本周VIP意向', weekVip, g.vip);
+}
+function goalBar(label,v,goal){
+  const pct=Math.min(100,Math.round(v/goal*100));
+  return `<div class="goalRow"><div class="gt"><span>${label}</span><span><b>${v}</b> / ${goal}（${pct}%）</span></div>
+  <div class="pbar" style="height:10px"><i style="width:${pct}%;${pct>=100?'background:var(--green)':''}"></i></div></div>`;
+}
+function barChart(labels, vals, goal){
+  const W=Math.max(560, labels.length*40), H=180, padB=24, padT=14;
+  const max=Math.max(goal||0, ...vals, 1);
+  const bw=Math.min(26,(W/labels.length)*0.6);
+  let bars='';
+  labels.forEach((lb,i)=>{
+    const x=(i+0.5)*(W/labels.length);
+    const h=(vals[i]/max)*(H-padB-padT);
+    bars+=`<rect x="${x-bw/2}" y="${H-padB-h}" width="${bw}" height="${Math.max(h,1)}" rx="4" fill="${vals[i]>=goal&&goal?'#5a8a2e':'#2563eb'}" opacity="${vals[i]?1:.18}"/>`;
+    if(vals[i]) bars+=`<text x="${x}" y="${H-padB-h-5}" font-size="10" text-anchor="middle" fill="#6b6b63">${vals[i]}</text>`;
+    bars+=`<text x="${x}" y="${H-7}" font-size="9" text-anchor="middle" fill="#9a9a90">${lb}</text>`;
+  });
+  let goalLine='';
+  if(goal){
+    const gy=H-padB-(goal/max)*(H-padB-padT);
+    goalLine=`<line x1="0" x2="${W}" y1="${gy}" y2="${gy}" stroke="#b45309" stroke-dasharray="5 4" stroke-width="1"/><text x="${W-4}" y="${gy-4}" font-size="9" text-anchor="end" fill="#b45309">目标 ${goal}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">${goalLine}${bars}</svg>`;
+}
+
+/* ===================== 管理视角 ===================== */
+function getTeam(){ return store.get('team',{}); }
+function importTeamFiles(files){
+  if(!files.length) return;
+  let ok=0, fail=0, pending=files.length;
+  const team=getTeam();
+  Array.from(files).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const data=JSON.parse(reader.result);
+        if(data.app!=='swfn' || !data.name || !data.reports) throw 0;
+        team[data.name]={reports:data.reports, importedAt:new Date().toISOString()};
+        ok++;
+      }catch(e){ fail++; }
+      if(--pending===0){
+        store.set('team',team); renderMembers();
+        toast('导入成功 '+ok+' 人'+(fail?('，失败 '+fail+' 个文件'):''));
+      }
+    };
+    reader.readAsText(f);
+  });
+  document.getElementById('importFile').value='';
+}
+function importFromText(){
+  const text=document.getElementById('pasteArea').value;
+  if(!text.trim()) return toast('请先粘贴日报文本');
+  // 识别所有日报块：商务日报 | 姓名 | 日期
+  const re=/商务日报\s*[|｜]\s*([^|｜\n]+?)\s*[|｜]\s*(\d{4}-\d{2}-\d{2})/g;
+  const heads=[]; let m;
+  while((m=re.exec(text))) heads.push({name:m[1].trim(), date:m[2], start:m.index});
+  if(!heads.length) return toast('未识别到日报。请确认粘贴的内容里包含平台生成的日报文本');
+  const team=getTeam(); const names=new Set();
+  heads.forEach((h,i)=>{
+    const seg=text.slice(h.start, i+1<heads.length ? heads[i+1].start : text.length);
+    const num=l=>{ const mm=seg.match(new RegExp(l+'[:：]\\s*(\\d+)')); return mm?+mm[1]:0; };
+    const txt=l=>{ const mm=seg.match(new RegExp(l+'[:：]\\s*([^\\n]*)')); return mm?mm[1].trim():''; };
+    if(!team[h.name]) team[h.name]={reports:{}};
+    team[h.name].reports[h.date]={
+      comm:num('有效沟通'), new:num('新增联系人'), vip:num('VIP意向推进'),
+      group:num('入群'), deal:num('成交'), note:txt('今日复盘'), plan:txt('明日计划')
+    };
+    team[h.name].importedAt=new Date().toISOString();
+    names.add(h.name);
+  });
+  store.set('team',team); renderMembers();
+  document.getElementById('pasteArea').value='';
+  toast('已导入 '+heads.length+' 份日报，共 '+names.size+' 人 ✓');
+}
+function removeMember(name){
+  if(!confirm('移除成员「'+name+'」的数据？')) return;
+  const team=getTeam(); delete team[name]; store.set('team',team); renderMembers();
+}
+function renderMembers(){
+  const team=getTeam(); const names=Object.keys(team);
+  const el=document.getElementById('memberList');
+  if(!names.length){ el.innerHTML='<p class="muted">尚未导入任何成员数据。</p>'; return; }
+  el.innerHTML=names.map(n=>{
+    const m=team[n];
+    const last=Object.keys(m.reports).sort().reverse()[0]||'—';
+    return `<div class="reportItem"><div><b>${esc(n)}</b>　<span class="muted">最近日报：${last} · 导入于 ${m.importedAt.slice(0,10)}</span></div>
+    <button class="btn small danger" onclick="removeMember('${esc(n)}')">移除</button></div>`;
+  }).join('');
+}
+function renderTeam(){
+  const team=getTeam(); const names=Object.keys(team);
+  document.getElementById('teamEmpty').style.display=names.length?'none':'block';
+  document.getElementById('teamBody').style.display=names.length?'block':'none';
+  if(!names.length) return;
+  const ws=weekStart(), ms=monthStart(), t=today();
+
+  let tComm=0,tVip=0,tDeal=0,reportedToday=0;
+  const rows=names.map(n=>{
+    const r=team[n].reports;
+    const row={
+      name:n,
+      todayComm:(+r[t]?.comm)||0,
+      weekComm:sumRange(r,ws,t,'comm'),
+      weekVip:sumRange(r,ws,t,'vip'),
+      weekGroup:sumRange(r,ws,t,'group'),
+      monthDeal:sumRange(r,ms,t,'deal'),
+      hasToday:!!r[t],
+      last:Object.keys(r).sort().reverse()[0]||'—'
+    };
+    tComm+=row.weekComm; tVip+=row.weekVip; tDeal+=row.monthDeal;
+    if(row.hasToday) reportedToday++;
+    return row;
+  }).sort((a,b)=>b.weekComm-a.weekComm);
+
+  document.getElementById('teamStats').innerHTML=[
+    {v:names.length,l:'团队人数'},
+    {v:reportedToday+'/'+names.length,l:'今日已报日报'},
+    {v:tComm,l:'本周有效沟通'},
+    {v:tVip,l:'本周VIP意向'},
+    {v:tDeal,l:'本月成交'}
+  ].map(c=>`<div class="stat"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`).join('');
+
+  // 7天团队总量
+  const days=[]; for(let i=6;i>=0;i--) days.push(daysAgo(i));
+  const vals=days.map(d=>names.reduce((s,n)=>s+((+team[n].reports[d]?.comm)||0),0));
+  document.getElementById('teamChart').innerHTML=barChart(days.map(d=>d.slice(5)),vals,0);
+
+  document.getElementById('teamTable').innerHTML=
+    '<tr><th>成员</th><th>今日沟通</th><th>本周沟通</th><th>本周VIP</th><th>本周入群</th><th>本月成交</th><th>今日日报</th><th>最近上报</th></tr>'+
+    rows.map((r,i)=>`<tr>
+      <td>${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}<b>${esc(r.name)}</b></td>
+      <td>${r.todayComm}</td><td><b>${r.weekComm}</b></td><td>${r.weekVip}</td><td>${r.weekGroup}</td><td>${r.monthDeal}</td>
+      <td>${r.hasToday?'<span class="badge ok">已报</span>':'<span class="badge warn">未报</span>'}</td>
+      <td class="muted">${r.last}</td></tr>`).join('');
+}
+
+/* ===================== 初始化 ===================== */
+document.getElementById('rDate').value=today();
+renderName(); renderFocus(); renderCourses(); renderScenarios(); resetChat(); loadAiCfgUI(); renderReportList();
+</script>
+</body>
+</html>
