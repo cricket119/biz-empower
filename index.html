@@ -299,7 +299,10 @@ const store = {
    anon key 是 Supabase 设计为可公开的客户端密钥，放在前端是官方用法。
    留空则回退为纯本地模式（微信粘贴汇总）。
 ============================================================ */
-const CLOUD = { url:'', key:'' };
+const CLOUD = {
+  url:'https://uuqxjpjrzzugzebiedvn.supabase.co',
+  key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1cXhqcGpyenp1Z3plYmllZHZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMzc3MzEsImV4cCI6MjA5NjcxMzczMX0.91dqKy1u1XpduEziz0Yrlz5DI6AlrlEfki4C0gcH_6I'
+};
 const cloudOn = () => !!(CLOUD.url && CLOUD.key);
 async function sb(path, opts={}){
   const res = await fetch(CLOUD.url+'/rest/v1/'+path, {...opts,
